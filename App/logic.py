@@ -30,7 +30,6 @@ import time
 from DataStructures.List import array_list as lt
 from DataStructures.Queue import queue as q
 from DataStructures.Stack import stack as st
-# TODO Importar las librerías correspondientes para el manejo de pilas y colas
 
 data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/'
 
@@ -57,11 +56,9 @@ def new_logic():
     catalog['authors'] = lt.new_list()
     catalog['tags'] = lt.new_list()
     catalog['book_tags'] = lt.new_list()
-    # TODO Implementar la inicialización de la lista de asociación de libros y tags
-    catalog['books_to_read'] = None
-    catalog["book_sublist"] = None
+    catalog['books_to_read'] = q.new_queue()
+    catalog["book_sublist"] = st.new_stack()
     return catalog
-
 
 # Funciones para la carga de datos
 
@@ -74,7 +71,7 @@ def load_data(catalog):
     books, authors = load_books(catalog)
     tag_size = load_tags(catalog)
     book_tag_size = load_books_tags(catalog)
-    # TODO Cargar los datos de libros para leer
+    books_to_read = load_books_to_read(catalog)
     return books, authors, tag_size, book_tag_size, books_to_read
 
 
@@ -117,7 +114,10 @@ def load_books_to_read(catalog):
     """
     Carga la información del archivo to_read y los agrega a la lista de libros por leer
     """
-    # TODO Implementar la carga de los libros por leer del archivo to_read
+    to_readfile = data_dir + '/to_read.csv'
+    input_file = csv.DictReader(open(to_readfile, encoding='utf-8'))
+    for book_to_read in input_file:
+        add_book_to_read(catalog, book_to_read)
     return books_to_read_size(catalog)
 
 # Funciones de consulta sobre el catálogo
@@ -129,7 +129,11 @@ def get_books_stack_by_user(catalog, user_id):
     """
     books_stack = st.new_stack()
 
-    # TODO Completar la función que retorna los libros por leer de un usuario. Se debe usar el TAD Pila para resolver el requerimiento
+    books_to_read = catalog['books_to_read']
+    for pos in range(lt.size(books_to_read)):
+        book_to_read = lt.get_element(books_to_read, pos)
+        if int(book_to_read['user_id']) == user_id:
+            st.push(books_stack, book_to_read['book_id'])
 
     return books_stack
 
@@ -140,7 +144,23 @@ def get_user_position_on_queue(catalog, user_id, book_id):
     """
     queue = q.new_queue()
 
-    # TODO Completar la función que retorna la posición de un usuario en la cola para leer un libro. Se debe usar el TAD Cola para resolver el requerimiento.
+    books_to_read = catalog['books_to_read']
+    for pos in range(lt.size(books_to_read)):
+        book_to_read = lt.get_element(books_to_read, pos)
+        if int(book_to_read['book_id']) == book_id:
+            q.enqueue(queue, book_to_read['user_id'])
+
+    position = 1
+    found = False
+    while not q.is_empty(queue):
+        current_user = q.dequeue(queue)
+        if int(current_user) == user_id:
+            found = True
+            break
+        position += 1
+
+    if not found:
+        position = -1
 
     return position
 
@@ -262,8 +282,7 @@ def book_tag_size(catalog):
 
 
 def books_to_read_size(catalog):
-    # TODO Implementar la función que retorna el tamaño de la lista de libros por leer
-    pass
+    return q.size(catalog['books_to_read'])
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 
@@ -352,16 +371,24 @@ def measure_stack_performance(catalog):
 
     # Medir push
     start_time = get_time()
-    # TODO Implementar la medición de tiempo para la operación push
+    for pos in range(lt.size(catalog["book_sublist"])):
+        book = lt.get_element(catalog["book_sublist"], pos)
+        st.push(stack, book)
+    end_time = get_time()
+    push_time = delta_time(start_time, end_time)
 
     # Medir top
     start_time = get_time()
-    # TODO Implementar la medición de tiempo para la operación top
+    next = st.top(stack)
     end_time = get_time()
     top_time = delta_time(start_time, end_time)
 
-    # Medir dequeue
-    # TODO Implementar la medición de tiempo para la operación pop
+    # Medir pop
+    start_time = get_time()
+    while not st.is_empty(stack):
+        st.pop(stack)
+    end_time = get_time()
+    pop_time = delta_time(start_time, end_time)
 
     return {
         "push_time": push_time,
