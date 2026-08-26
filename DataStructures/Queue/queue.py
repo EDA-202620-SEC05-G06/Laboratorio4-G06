@@ -1,0 +1,6 @@
+def new_queue() 
+def enqueue()
+def dequeue()
+def peek() 
+def is_empty()
+def size()
