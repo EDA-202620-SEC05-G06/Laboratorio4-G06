@@ -31,7 +31,7 @@ from DataStructures.List import array_list as lt
 from DataStructures.Queue import queue as q
 from DataStructures.Stack import stack as st
 
-data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/'
+data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/GoodReads/'
 
 """
 El controlador se encarga de mediar entre la vista y el modelo.
@@ -128,12 +128,17 @@ def get_books_stack_by_user(catalog, user_id):
     Retorna una pila con los libros que un usuario tiene por leer.
     """
     books_stack = st.new_stack()
-
     books_to_read = catalog['books_to_read']
-    for pos in range(lt.size(books_to_read)):
-        book_to_read = lt.get_element(books_to_read, pos)
+
+    temp_queue = q.new_queue()
+    while not q.is_empty(books_to_read):
+        book_to_read = q.dequeue(books_to_read)
+        q.enqueue(temp_queue, book_to_read)
         if int(book_to_read['user_id']) == user_id:
             st.push(books_stack, book_to_read['book_id'])
+
+    while not q.is_empty(temp_queue):
+        q.enqueue(books_to_read, q.dequeue(temp_queue))
 
     return books_stack
 
@@ -142,18 +147,23 @@ def get_user_position_on_queue(catalog, user_id, book_id):
     """
     Retorna la posición de un usuario en la cola para leer un libro.
     """
-    queue = q.new_queue()
-
     books_to_read = catalog['books_to_read']
-    for pos in range(lt.size(books_to_read)):
-        book_to_read = lt.get_element(books_to_read, pos)
+
+    matches = q.new_queue()
+    temp_queue = q.new_queue()
+    while not q.is_empty(books_to_read):
+        book_to_read = q.dequeue(books_to_read)
+        q.enqueue(temp_queue, book_to_read)
         if int(book_to_read['book_id']) == book_id:
-            q.enqueue(queue, book_to_read['user_id'])
+            q.enqueue(matches, book_to_read['user_id'])
+
+    while not q.is_empty(temp_queue):
+        q.enqueue(books_to_read, q.dequeue(temp_queue))
 
     position = 1
     found = False
-    while not q.is_empty(queue):
-        current_user = q.dequeue(queue)
+    while not q.is_empty(matches):
+        current_user = q.dequeue(matches)
         if int(current_user) == user_id:
             found = True
             break
@@ -220,7 +230,7 @@ def add_book_to_read(catalog, book_to_read):
     Adiciona un libro a la lista de libros por leer
     """
     t = new_book_to_read(book_to_read['user_id'], book_to_read['book_id'])
-    lt.add_last(catalog['books_to_read'], t)
+    q.enqueue(catalog['books_to_read'], t)
     return catalog
 
 # Funciones para creacion de datos
