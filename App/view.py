@@ -73,7 +73,7 @@ def print_books_to_read(results):
         print("Libro id: " + str(book_id))
 
 
-def print_tests_results(queue_results, stack_results):
+def print_test_result(queue_results, stack_results):
     """
     Imprime los resultados de las pruebas de rendimiento
     """
@@ -144,7 +144,7 @@ def main():
             print("Ejecutando pruebas de rendimiento...")
             queue_result = logic.measure_queue_performance(control)
             stack_result = logic.measure_stack_performance(control)
-            print_tests_results(queue_result, stack_result)
+            print_test_result(queue_result, stack_result)
 
         elif int(inputs[0]) == 0:
             working = False

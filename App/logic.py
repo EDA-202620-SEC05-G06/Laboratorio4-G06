@@ -127,15 +127,18 @@ def get_books_stack_by_user(catalog, user_id):
     """
     Retorna una pila con los libros que un usuario tiene por leer.
     """
-    books_stack = st.new_stack()
     books_to_read = catalog['books_to_read']
-
+    books_stack = st.new_stack()
     temp_queue = q.new_queue()
-    while not q.is_empty(books_to_read):
+
+    # se recorre la cola una sola vez y se va reconstruyendo en temp_queue
+    # para no perder el orden original de los demas usuarios
+    total = q.size(books_to_read)
+    for _ in range(total):
         book_to_read = q.dequeue(books_to_read)
-        q.enqueue(temp_queue, book_to_read)
         if int(book_to_read['user_id']) == user_id:
             st.push(books_stack, book_to_read['book_id'])
+        q.enqueue(temp_queue, book_to_read)
 
     while not q.is_empty(temp_queue):
         q.enqueue(books_to_read, q.dequeue(temp_queue))
@@ -148,29 +151,20 @@ def get_user_position_on_queue(catalog, user_id, book_id):
     Retorna la posición de un usuario en la cola para leer un libro.
     """
     books_to_read = catalog['books_to_read']
-
-    matches = q.new_queue()
     temp_queue = q.new_queue()
+
+    position = -1
+    counter = 0
     while not q.is_empty(books_to_read):
         book_to_read = q.dequeue(books_to_read)
         q.enqueue(temp_queue, book_to_read)
         if int(book_to_read['book_id']) == book_id:
-            q.enqueue(matches, book_to_read['user_id'])
+            counter += 1
+            if position == -1 and int(book_to_read['user_id']) == user_id:
+                position = counter
 
     while not q.is_empty(temp_queue):
         q.enqueue(books_to_read, q.dequeue(temp_queue))
-
-    position = 1
-    found = False
-    while not q.is_empty(matches):
-        current_user = q.dequeue(matches)
-        if int(current_user) == user_id:
-            found = True
-            break
-        position += 1
-
-    if not found:
-        position = -1
 
     return position
 
